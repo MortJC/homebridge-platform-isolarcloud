@@ -1,0 +1,34 @@
+{
+  "name": "homebridge-platform-isolarcloud",
+  "version": "1.0.1",
+  "description": "iSolarCloud platform plugin for [HomeBridge](https://github.com/nfarina/homebridge).",
+  "main": "index.js",
+  "dependencies": {
+    "bent": "^7.3.0",
+    "ws": "^7.2.3",
+    "reconnecting-websocket": "^4.4.0"
+  },
+  "engines": {
+    "homebridge": ">=0.4.0",
+    "node": ">=8.6.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MortJC/homebridge-platform-isolarcloud.git"
+  },
+  "keywords": [
+    "homebridge-plugin",
+    "homekit",
+    "isolarcloud",
+    "inverter"
+  ],
+  "author": "James Carvosso",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MortJC/homebridge-platform-isolarcloud/issues"
+  },
+  "homepage": "https://github.com/MortJC/homebridge-platform-isolarcloudw#readme"
+}
