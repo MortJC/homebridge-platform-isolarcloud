@@ -94,9 +94,9 @@ class ISolarCloudPowerStationsAPI {
                     "sys_code": "900"
                 });
 
-            let currentPowerValue = parseInt(response['result_data']['curr_power']['value']);
+            let currentPowerValue = parseFloat(response['result_data']['curr_power']['value']);
             let currentPowerUnit = response['result_data']['curr_power']['unit'];
-            // let designCapacityValue = parseInt(response['result_data']['design_capacity']['value']);
+            // let designCapacityValue = parseFloat(response['result_data']['design_capacity']['value']);
             // let designCapacityUnit = response['result_data']['design_capacity']['unit'];
             if (currentPowerUnit == 'kW') currentPowerValue = currentPowerValue * 1000;
             // if (designCapacityUnit == 'kWp') designCapacityValue = designCapacityValue * 1000;
