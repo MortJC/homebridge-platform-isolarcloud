@@ -95,6 +95,7 @@ class ISolarCloudPowerStationsAPI {
                 });
 
             let currentPowerValue = parseFloat(response['result_data']['curr_power']['value']);
+            if (isNaN(currentPowerValue)) currentPowerValue = 0;
             let currentPowerUnit = response['result_data']['curr_power']['unit'];
             // let designCapacityValue = parseFloat(response['result_data']['design_capacity']['value']);
             // let designCapacityUnit = response['result_data']['design_capacity']['unit'];
