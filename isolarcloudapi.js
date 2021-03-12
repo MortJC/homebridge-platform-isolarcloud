@@ -18,9 +18,7 @@ class ISolarCloudAPI {
             let login = await postJSON(endpoint + "/userService/login",
                 {
                     "user_account": this._email,
-                    "user_password": this._password
-                },
-                {
+                    "user_password": this._password,
                     "appkey": "93D72E60331ABDCDC7B39ADC2D1F32B3",
                     "sys_code": "900"
                 });
@@ -42,18 +40,15 @@ class ISolarCloudAPI {
                 {
                     "user_id": this._userid,
                     "valid_flag": "1,3",
-                    "lang": "_en_US"
-                },
-                {
+                    "lang": "_en_US",
                     "token": this._token,
                     "appkey": "93D72E60331ABDCDC7B39ADC2D1F32B3",
                     "sys_code": "900"
                 });
+            this.log.debug(getPsList);
 
             // Loop through list of Power Stations
             getPsList['result_data']['pageList'].forEach(function (pageList) {
-                this.log.debug(pageList);
-
                 // Create the device
                 let powerStation = new ISolarCloudPowerStationsAPI(this.log, this._token, pageList['ps_id'].toString(), pageList['ps_name'], "", "", pageList['ps_status']);
                 powerStations.push(powerStation);
@@ -86,9 +81,7 @@ class ISolarCloudPowerStationsAPI {
             let response = await getJSON(endpoint + "/powerStationService/getPsDetail",
                 {
                     "ps_id": this._id,
-                    "lang": "_en_US"
-                },
-                {
+                    "lang": "_en_US",
                     "token": this._token,
                     "appkey": "93D72E60331ABDCDC7B39ADC2D1F32B3",
                     "sys_code": "900"
