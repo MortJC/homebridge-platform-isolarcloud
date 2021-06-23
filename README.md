@@ -10,8 +10,8 @@ iSolarCloud platform plugin for [HomeBridge](https://github.com/nfarina/homebrid
 ```
 "platforms": [
 	{
-		"platform": "isolarcloud",
-		"name" : "isolarcloud",
+		"platform": "ISolarCloud",
+		"name" : "ISolarCloud",
 		"email": "joe.blogs@gmail.com",
 		"password": "MySecretPassword"
 	}
