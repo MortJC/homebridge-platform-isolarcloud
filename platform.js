@@ -93,7 +93,7 @@ class PlatformISolarCloud {
     let newPlatformAccessory = new PlatformAccessory(powerStation._name, uuid);
     newPlatformAccessory.addService(Service.LightSensor, powerStation._name);
     newPlatformAccessory.getService(Service.LightSensor)
-      .setCharacteristic(Characteristic.CurrentAmbientLightLevel, 0);
+      .setCharacteristic(Characteristic.CurrentAmbientLightLevel, 1);
 
     // Create AccessoryInformation Service
     newPlatformAccessory.getService(Service.AccessoryInformation)
@@ -127,7 +127,7 @@ class PlatformISolarCloud {
       case "CurrentAmbientLightLevel":
         powerStation.getCurrentPower()
           .then(function (currentPower) {
-            powerStationAccessory.getCharacteristic(Characteristic.CurrentAmbientLightLevel).updateValue(currentPower);
+            powerStationAccessory.getCharacteristic(Characteristic.CurrentAmbientLightLevel).updateValue(Math.max(currentPower,1));
             this.log.info("Current Power =", currentPower);
             callback(null, currentPower);
           }.bind(this));
