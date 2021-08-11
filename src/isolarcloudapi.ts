@@ -61,7 +61,8 @@ export class ISolarCloudAPI {
             // Loop through list of Power Stations
             getPsList['result_data']['pageList'].forEach((pageList: any) => {
                 // Create the device
-                let powerStation = new ISolarCloudPowerStationsAPI(this.log, this.token, pageList['ps_id'].toString(), pageList['ps_name'], "", "", pageList['ps_status']);
+                this.log.debug(pageList);
+                let powerStation = new ISolarCloudPowerStationsAPI(this.log, this.token, pageList['ps_id'].toString(), pageList['ps_name'], "Unknown", "Unknown", pageList['ps_status']);
                 powerStations.push(powerStation);
             });
             return powerStations;

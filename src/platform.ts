@@ -104,11 +104,11 @@ class PlatformISolarCloud {
 
 
   createLightSensorService(powerStationAccessory: PlatformAccessory, powerStation: ISolarCloudPowerStationsAPI) {
-    this.log.debug('Create Power Station Accessory', powerStation.id);
+    this.log.debug('Create Power Station Accessory, id = ', powerStation.id, ', name = ', powerStation.name);
 
     // Create AccessoryInformation Service
     powerStationAccessory.getService(hap.Service.AccessoryInformation)!
-      .setCharacteristic(hap.Characteristic.Name, powerStation.name)
+      .setCharacteristic(hap.Characteristic.Name, powerStation.id)
       .setCharacteristic(hap.Characteristic.Manufacturer, "iSolarCloud")
       .setCharacteristic(hap.Characteristic.SerialNumber, powerStation.id)
       .setCharacteristic(hap.Characteristic.Model, powerStation.hardware_version)
