@@ -82,7 +82,7 @@ class PlatformISolarCloud {
 
                 // Create Power Station Accessory and Irrigation Service
                 let powerStationAccessory = new this.api.platformAccessory(powerStation.name, uuid);
-                let lightSensorService = this.createLightSensorService(powerStationAccessory);
+                let lightSensorService = this.createLightSensorService(powerStationAccessory, powerStation);
                 this.configureLightSensor(lightSensorService, powerStation);
 
                 // Register platform accessory
@@ -103,19 +103,19 @@ class PlatformISolarCloud {
   }
 
 
-  createLightSensorService(powerStationAccessory: PlatformAccessory) {
-    this.log.debug('Create Power Station Accessory', powerStationAccessory.context.powerstation.id);
+  createLightSensorService(powerStationAccessory: PlatformAccessory, powerStation: ISolarCloudPowerStationsAPI) {
+    this.log.debug('Create Power Station Accessory', powerStation.id);
 
     // Create AccessoryInformation Service
     powerStationAccessory.getService(hap.Service.AccessoryInformation)!
-      .setCharacteristic(hap.Characteristic.Name, powerStationAccessory.context.powerStation.name)
+      .setCharacteristic(hap.Characteristic.Name, powerStation.name)
       .setCharacteristic(hap.Characteristic.Manufacturer, "iSolarCloud")
-      .setCharacteristic(hap.Characteristic.SerialNumber, powerStationAccessory.context.powerStation.id)
-      .setCharacteristic(hap.Characteristic.Model, powerStationAccessory.context.powerStation.hardware_version)
-      .setCharacteristic(hap.Characteristic.FirmwareRevision, powerStationAccessory.context.powerStation.firmware_version);
+      .setCharacteristic(hap.Characteristic.SerialNumber, powerStation.id)
+      .setCharacteristic(hap.Characteristic.Model, powerStation.hardware_version)
+      .setCharacteristic(hap.Characteristic.FirmwareRevision, powerStation.firmware_version);
 
     // Create new Power Station Accessory
-    let lightSensorService = powerStationAccessory.addService(hap.Service.LightSensor, powerStationAccessory.context.powerStation.name)
+    let lightSensorService = powerStationAccessory.addService(hap.Service.LightSensor, powerStation.name)
       .setCharacteristic(hap.Characteristic.CurrentAmbientLightLevel, 1);
 
     return lightSensorService;
