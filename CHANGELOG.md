@@ -1,6 +1,6 @@
 # Changes
 
-## 1.1.1
+## 1.1.2
 
 - [Fix] Addressed issue with creating the accessory
 
