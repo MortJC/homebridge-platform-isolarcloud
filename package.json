@@ -2,18 +2,24 @@
   "name": "homebridge-platform-isolarcloud",
   "version": "1.0.5",
   "description": "iSolarCloud platform plugin for [HomeBridge](https://github.com/nfarina/homebridge).",
-  "main": "index.js",
   "dependencies": {
-    "bent": "^7.3.0",
-    "ws": "^7.2.3",
-    "reconnecting-websocket": "^4.4.0"
+    "bent": "^7.3.0"
+  },
+  "devDependencies": {
+    "@types/bent": "^7.3.2",
+    "@types/node": "10.17.19",
+    "homebridge": "^1.0.4",
+    "rimraf": "^3.0.2",
+    "typescript": "^3.8.3"
   },
   "engines": {
     "homebridge": ">=0.4.0",
     "node": ">=8.6.0"
   },
+  "main": "dist/platform.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
   },
   "repository": {
     "type": "git",

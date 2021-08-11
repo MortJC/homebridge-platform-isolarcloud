@@ -1,0 +1,143 @@
+import {
+  API,
+  HAP,
+  PlatformAccessory,
+  PlatformConfig,
+  Logger,
+  Service
+} from "homebridge";
+
+const PluginName = 'homebridge-platform-isolarcloud';
+const PlatformName = 'ISolarCloud';
+
+let hap: HAP;
+
+export = (api: API) => {
+  hap = api.hap;
+  api.registerPlatform(PluginName, PlatformName, PlatformISolarCloud);
+};
+
+import { ISolarCloudAPI, ISolarCloudPowerStationsAPI } from './isolarcloudapi';
+
+class PlatformISolarCloud {
+  private readonly email: string = "";
+  private readonly password: string = "";
+  private accessories: { [uuid: string]: PlatformAccessory } = {};
+
+  constructor(public readonly log: Logger, public readonly config: PlatformConfig, public readonly api: API) {
+    if (!config || !config["email"] || !config["password"]) {
+      this.log.error("Platform config incorrect or missing. Check the config.json file.");
+    }
+    else {
+      this.email = config["email"];
+      this.password = config["password"];
+
+      this.log.info('Starting PlatformISolarCloud using homebridge API', api.version);
+      if (api) {
+
+        // save the api for use later
+        this.api = api;
+
+        // if finished loading cache accessories
+        this.api.on("didFinishLaunching", () => {
+
+          // Load the Power Stations
+          this.loadPowerStations();
+        });
+      }
+    }
+  }
+
+
+  loadPowerStations() {
+    this.log.debug("Load the Power Stations");
+
+
+    // login to the API and get the token
+    let iSolarCloudAPI: ISolarCloudAPI = new ISolarCloudAPI(this.log, this.email, this.password);
+    iSolarCloudAPI.login()
+      .then(() => {
+
+        // get an array of the Power Stations
+        iSolarCloudAPI.getPowerStations()
+          .then((powerStations: ISolarCloudPowerStationsAPI[]) => {
+
+            // loop through each Power Station
+            powerStations.forEach(((powerStation: ISolarCloudPowerStationsAPI) => {
+
+              // Generate service uuid
+              const uuid = hap.uuid.generate(powerStation.id);
+
+              // Check if Power Station is already loaded from cache
+              if (this.accessories[uuid]) {
+                this.log.info('Configuring cached Power Station');
+
+                // Setup Irrigation Accessory and Irrigation Service
+                let powerStationAccessory = this.accessories[uuid];
+                this.configureLightSensor(powerStationAccessory.getService(hap.Service.LightSensor)!, powerStation);
+
+              }
+              else {
+                this.log.info('Creating and configuring new Power Station', powerStation.name);
+
+                // Create Power Station Accessory and Irrigation Service
+                let powerStationAccessory = new this.api.platformAccessory(powerStation.name, uuid);
+                let lightSensorService = this.createLightSensorService(powerStationAccessory);
+                this.configureLightSensor(lightSensorService, powerStation);
+
+                // Register platform accessory
+                this.log.debug('Registering platform accessory');
+                this.api.registerPlatformAccessories(PluginName, PlatformName, [powerStationAccessory]);
+                this.accessories[uuid] = powerStationAccessory;
+              }
+            }));
+          });
+      })
+  }
+
+
+  configureAccessory(accessory: PlatformAccessory) {
+    // Added cached devices to the accessories arrary
+    this.log.info('Remembered accessory, configuring handlers', accessory.displayName);
+    this.accessories[accessory.UUID] = accessory;
+  }
+
+
+  createLightSensorService(powerStationAccessory: PlatformAccessory) {
+    this.log.debug('Create Power Station Accessory', powerStationAccessory.context.powerstation.id);
+
+    // Create AccessoryInformation Service
+    powerStationAccessory.getService(hap.Service.AccessoryInformation)!
+      .setCharacteristic(hap.Characteristic.Name, powerStationAccessory.context.powerStation.name)
+      .setCharacteristic(hap.Characteristic.Manufacturer, "iSolarCloud")
+      .setCharacteristic(hap.Characteristic.SerialNumber, powerStationAccessory.context.powerStation.id)
+      .setCharacteristic(hap.Characteristic.Model, powerStationAccessory.context.powerStation.hardware_version)
+      .setCharacteristic(hap.Characteristic.FirmwareRevision, powerStationAccessory.context.powerStation.firmware_version);
+
+    // Create new Power Station Accessory
+    let lightSensorService = powerStationAccessory.addService(hap.Service.LightSensor, powerStationAccessory.context.powerStation.name)
+      .setCharacteristic(hap.Characteristic.CurrentAmbientLightLevel, 1);
+
+    return lightSensorService;
+  }
+
+
+  configureLightSensor(lightSensor: Service, powerStation: ISolarCloudPowerStationsAPI) {
+    this.log.debug('Configure Power Station', lightSensor.getCharacteristic(hap.Characteristic.Name).value)
+
+    // Configure powerStationAccessory
+    lightSensor
+      .getCharacteristic(hap.Characteristic.CurrentAmbientLightLevel)
+      .onGet(() => {
+        return powerStation.getCurrentPower()
+          .then((currentPower: number) => {
+            currentPower = Math.max(currentPower, 1);
+            lightSensor.getCharacteristic(hap.Characteristic.CurrentAmbientLightLevel).updateValue(currentPower);
+            this.log.info("Current Power =", currentPower);
+            return currentPower;
+          });
+      })
+  };
+
+
+}
