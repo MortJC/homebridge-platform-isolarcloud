@@ -1,5 +1,9 @@
 # Changes
 
+## 1.2.1
+
+- [Fix] Added server parameter
+
 ## 1.1.3
 
 - [Fix] Addressed issue with creating the accessory

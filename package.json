@@ -1,6 +1,6 @@
 {
   "name": "homebridge-platform-isolarcloud",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "iSolarCloud platform plugin for [HomeBridge](https://github.com/nfarina/homebridge).",
   "dependencies": {
     "bent": "^7.3.2"
