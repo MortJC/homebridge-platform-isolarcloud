@@ -20,15 +20,18 @@ export = (api: API) => {
 import { ISolarCloudAPI, ISolarCloudPowerStationsAPI } from './isolarcloudapi';
 
 class PlatformISolarCloud {
+  private readonly server: string = "";
   private readonly email: string = "";
   private readonly password: string = "";
   private accessories: { [uuid: string]: PlatformAccessory } = {};
+  private currentPower: number = 1;
 
   constructor(public readonly log: Logger, public readonly config: PlatformConfig, public readonly api: API) {
     if (!config || !config["email"] || !config["password"]) {
       this.log.error("Platform config incorrect or missing. Check the config.json file.");
     }
     else {
+      this.server = config["server"];
       this.email = config["email"];
       this.password = config["password"];
 
@@ -52,9 +55,8 @@ class PlatformISolarCloud {
   loadPowerStations() {
     this.log.debug("Load the Power Stations");
 
-
     // login to the API and get the token
-    let iSolarCloudAPI: ISolarCloudAPI = new ISolarCloudAPI(this.log, this.email, this.password);
+    let iSolarCloudAPI: ISolarCloudAPI = new ISolarCloudAPI(this.log, this.server, this.email, this.password);
     iSolarCloudAPI.login()
       .then(() => {
 
@@ -129,13 +131,13 @@ class PlatformISolarCloud {
     lightSensor
       .getCharacteristic(hap.Characteristic.CurrentAmbientLightLevel)
       .onGet(() => {
-        return powerStation.getCurrentPower()
+        powerStation.getCurrentPower()
           .then((currentPower: number) => {
-            currentPower = Math.max(currentPower, 1);
-            lightSensor.getCharacteristic(hap.Characteristic.CurrentAmbientLightLevel).updateValue(currentPower);
-            this.log.info("Current Power =", currentPower);
-            return currentPower;
+            this.currentPower = Math.max(currentPower, 1);
+            this.log.info("Current Power =", this.currentPower);
+            lightSensor.getCharacteristic(hap.Characteristic.CurrentAmbientLightLevel).updateValue(this.currentPower);
           });
+        return this.currentPower;
       })
   };
 

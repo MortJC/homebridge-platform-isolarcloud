@@ -12,6 +12,7 @@ iSolarCloud platform plugin for [HomeBridge](https://github.com/nfarina/homebrid
 	{
 		"platform": "ISolarCloud",
 		"name" : "ISolarCloud",
+		"server": "Australian",
 		"email": "joe.blogs@gmail.com",
 		"password": "MySecretPassword"
 	}

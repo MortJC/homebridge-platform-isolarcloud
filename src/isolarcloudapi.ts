@@ -2,20 +2,34 @@ import { Logger } from "homebridge";
 
 import bent from 'bent';
 
-const endpoint = 'https://gateway.isolarcloud.com.hk/v1';
-
 export class ISolarCloudAPI {
 
     private readonly log: Logger;
+    private readonly server: string;
     private readonly email: string;
     private readonly password: string;
+    private endpoint: string;
     private token: string;
     private userid: string;
 
-    constructor(log: Logger, email: string, password: string) {
+    constructor(log: Logger, server: string, email: string, password: string) {
         this.log = log;
+        this.server = server;
         this.email = email;
         this.password = password;
+        switch (server) {
+            case 'Australian':
+                this.endpoint = 'https://augateway.isolarcloud.com'
+                break;
+            case 'European':
+                this.endpoint = 'https://gateway.isolarcloud.eu'
+                break;
+            case 'Chinese':
+                this.endpoint = 'https://gateway.isolarcloud.com'
+                break;
+            default:
+                this.endpoint = 'https:/gateway.isolarcloud.com.hk'
+            } 
         this.userid = ""
         this.token = "";
     }
@@ -25,7 +39,7 @@ export class ISolarCloudAPI {
         // log us in
         try {
             const postJSON = bent('POST', 'json');
-            let login = await postJSON(endpoint + "/userService/login",
+            let login = await postJSON(this.endpoint + "/v1/userService/login",
                 {
                     "user_account": this.email,
                     "user_password": this.password,
@@ -35,7 +49,8 @@ export class ISolarCloudAPI {
             this.log.debug(login);
             this.token = login['result_data']['token'];
             this.userid = login['result_data']['user_id'];
-        } catch (error) {
+        } catch (error: any)
+        {
             this.log.error(error);
         }
     }
@@ -47,7 +62,7 @@ export class ISolarCloudAPI {
         // Get the device details
         try {
             const postJSON = bent('POST', 'json');
-            let getPsList = await postJSON(endpoint + "/powerStationService/getPsList",
+            let getPsList = await postJSON(this.endpoint + "/v1/powerStationService/getPsList",
                 {
                     "user_id": this.userid,
                     "valid_flag": "1,3",
@@ -62,11 +77,11 @@ export class ISolarCloudAPI {
             getPsList['result_data']['pageList'].forEach((pageList: any) => {
                 // Create the device
                 this.log.debug(pageList);
-                let powerStation = new ISolarCloudPowerStationsAPI(this.log, this.token, pageList['ps_id'].toString(), pageList['ps_name'], "Unknown", "Unknown", pageList['ps_status']);
+                let powerStation = new ISolarCloudPowerStationsAPI(this.log, this.endpoint, this.token, pageList['ps_id'].toString(), pageList['ps_name'], "Unknown", "Unknown", pageList['ps_status']);
                 powerStations.push(powerStation);
             });
             return powerStations;
-        } catch (error) {
+        } catch (error: any) {
             this.log.error(error);
             throw error;
         }
@@ -76,6 +91,7 @@ export class ISolarCloudAPI {
 
 
 export class ISolarCloudPowerStationsAPI {
+    private readonly endpoint: string;
     private readonly log: Logger;
     private readonly token: string;
     public readonly id: string;
@@ -85,8 +101,9 @@ export class ISolarCloudPowerStationsAPI {
     public readonly is_connected: boolean;
 
 
-    constructor(log: Logger, token: string, id: string, name: string, hardware_version: string, firmware_version: string, is_connected: boolean) {
+    constructor(log: Logger, endpoint: string, token: string, id: string, name: string, hardware_version: string, firmware_version: string, is_connected: boolean) {
         this.log = log;
+        this.endpoint = endpoint;
         this.token = token;
         this.id = id;
         this.name = name;
@@ -101,7 +118,7 @@ export class ISolarCloudPowerStationsAPI {
         // Get the Power Station details
         try {
             const getJSON = bent('POST', 'json');
-            let response = await getJSON(endpoint + "/powerStationService/getPsDetail",
+            let response = await getJSON(this.endpoint + "/v1/powerStationService/getPsDetail",
                 {
                     "ps_id": this.id,
                     "lang": "_en_US",
@@ -119,7 +136,7 @@ export class ISolarCloudPowerStationsAPI {
             // if (designCapacityUnit == 'kWp') designCapacityValue = designCapacityValue * 1000;
             //let currentPowerLevel = Math.round(currentPowerValue / designCapacityValue * 100);
             return currentPowerValue;
-        } catch (error) {
+        } catch (error: any) {
             this.log.error(error);
             throw error;
         }
