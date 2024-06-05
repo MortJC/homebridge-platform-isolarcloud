@@ -1,5 +1,9 @@
 # Changes
 
+## 1.4.0
+
+- [Fix] Improved error handling and debugging
+
 ## 1.3.0
 
 - [Fix] Addressed new encryption API issue

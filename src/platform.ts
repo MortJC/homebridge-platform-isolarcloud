@@ -93,8 +93,10 @@ class PlatformISolarCloud {
                 this.accessories[uuid] = powerStationAccessory;
               }
             }));
-          });
+         })
+         .catch(error => this.log.error('Powerstations error ' + error));
       })
+      .catch(error => this.log.error('Login error ' + error));
   }
 
 
@@ -136,7 +138,8 @@ class PlatformISolarCloud {
             this.currentPower = Math.max(currentPower, 1);
             this.log.info("Current Power =", this.currentPower);
             lightSensor.getCharacteristic(hap.Characteristic.CurrentAmbientLightLevel).updateValue(this.currentPower);
-          });
+          })
+          .catch(error => this.log.error('CurrentPower error ' + error));
         return this.currentPower;
       })
   };

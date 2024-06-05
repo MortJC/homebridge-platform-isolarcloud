@@ -9,30 +9,30 @@ const ACCESS_KEY = "9grzgbmxdsp3arfmmgq347xjbza4ysps"
 
 
 export function randomKey() {
-  return "and" + 'q1w2e3r4t5y67'; //randomString(13);
+    return "and" + 'q1w2e3r4t5y67'; //randomString(13);
 }
 
 
 export function encryptAES<T>(data: T, key: string): string {
-  const d = CryptoJS.enc.Utf8.parse(JSON.stringify(data));
-  const k = CryptoJS.enc.Utf8.parse(key);
-  return CryptoJS.AES.encrypt(d, k, {
-    mode: CryptoJS.mode.ECB,
-    padding: CryptoJS.pad.Pkcs7,
-  })
-    .ciphertext.toString()
-    .toUpperCase();
+    const d = CryptoJS.enc.Utf8.parse(JSON.stringify(data));
+    const k = CryptoJS.enc.Utf8.parse(key);
+    return CryptoJS.AES.encrypt(d, k, {
+        mode: CryptoJS.mode.ECB,
+        padding: CryptoJS.pad.Pkcs7,
+    })
+        .ciphertext.toString()
+        .toUpperCase();
 }
 
 
 export function decryptAES<T>(data: string, key: string): T {
-  const d = CryptoJS.format.Hex.parse(data);
-  const k = CryptoJS.enc.Utf8.parse(key);
-  const dec = CryptoJS.AES.decrypt(d, k, {
-    mode: CryptoJS.mode.ECB,
-    padding: CryptoJS.pad.Pkcs7,
-  });
-  return JSON.parse(CryptoJS.enc.Utf8.stringify(dec)) as T;
+    const d = CryptoJS.format.Hex.parse(data);
+    const k = CryptoJS.enc.Utf8.parse(key);
+    const dec = CryptoJS.AES.decrypt(d, k, {
+        mode: CryptoJS.mode.ECB,
+        padding: CryptoJS.pad.Pkcs7,
+    });
+    return JSON.parse(CryptoJS.enc.Utf8.stringify(dec)) as T;
 }
 
 
@@ -63,7 +63,7 @@ export async function api(url: string, body: any, userid: string): Promise<any> 
     headers.append("content-type", "application/json;charset=UTF-8");
     headers.append("sys_code", "200");
     headers.append("x-access-key", ACCESS_KEY);
-    headers.append("x-random-secret-key", encryptRSA(randomKey, PUBLIC_KEY));    
+    headers.append("x-random-secret-key", encryptRSA(randomKey, PUBLIC_KEY));
     headers.append("x-limit-obj", encryptRSA(userid, PUBLIC_KEY));
 
     let encryptedBody = encryptAES(body, randomKey);
@@ -72,7 +72,7 @@ export async function api(url: string, body: any, userid: string): Promise<any> 
         method: "POST",
         headers: headers,
         body: encryptedBody
-        };
+    };
 
     let response = await fetch(url, requestOptions);
 
@@ -83,7 +83,7 @@ export async function api(url: string, body: any, userid: string): Promise<any> 
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-            result += decoder.decode(value, {stream: true});
+            result += decoder.decode(value, { stream: true });
         }
 
         return decryptAES(result, randomKey);
@@ -131,22 +131,26 @@ export class ISolarCloudAPI {
         // Login
         try {
             let body =
-                {
-                    "appkey": APP_KEY,
-                    "api_key_param": {'timestamp': Date.now(), 'nonce': generateRandomWord(32)},
-                    "user_account": this.email,
-                    "user_password": this.password
-                };
+            {
+                "appkey": APP_KEY,
+                "api_key_param": { 'timestamp': Date.now(), 'nonce': generateRandomWord(32) },
+                "user_account": this.email,
+                "user_password": this.password
+            };
 
             let response: any = await api(this.endpoint + "/v1/userService/login", body, this.userid);
 
-            this.log.debug('login respose = ' + response);
+            this.log.debug('login respose = ' + JSON.stringify(response));
 
-            this.token = response['result_data']['token'];
-            this.userid = response['result_data']['user_id'];
+            if (response['result_msg'] == 'success') {
+                this.token = response['result_data']['token'];
+                this.userid = response['result_data']['user_id'];
+            }
+            else
+                throw Error(response['result_msg']);
         } catch (error: any) {
-            this.log.error(error);
-        }        
+            throw error;
+        }
     }
 
 
@@ -157,29 +161,32 @@ export class ISolarCloudAPI {
         try {
 
             let body =
-                {
-                    "appkey": APP_KEY,
-                    "api_key_param": {'timestamp': Date.now(), 'nonce': generateRandomWord(32)},                    
-                    "user_id": this.userid,
-                    "valid_flag": "1,3",
-                    "lang": "_en_US",
-                    "token": this.token
-                };
+            {
+                "appkey": APP_KEY,
+                "api_key_param": { 'timestamp': Date.now(), 'nonce': generateRandomWord(32) },
+                "user_id": this.userid,
+                "valid_flag": "1,3",
+                "lang": "_en_US",
+                "token": this.token
+            };
 
             let response: any = await api(this.endpoint + "/v1/powerStationService/getPsList", body, this.userid);
 
-            this.log.debug('getPsList response = ' + response);
+            this.log.debug('getPsList response = ' + JSON.stringify(response));
 
-            // Loop through list of Power Stations
-            response['result_data']['pageList'].forEach((pageList: any) => {
-                // Create the device
-                this.log.debug(pageList);
-                let powerStation = new ISolarCloudPowerStationsAPI(this.log, this.endpoint, this.userid, this.token, pageList['ps_id'].toString(), pageList['ps_name'], "Unknown", "Unknown", pageList['ps_status']);
-                powerStations.push(powerStation);
-            });
-            return powerStations;
+            if (response['result_msg'] == 'success') {
+                // Loop through list of Power Stations
+                response['result_data']['pageList'].forEach((pageList: any) => {
+                    // Create the device
+                    this.log.debug(pageList);
+                    let powerStation = new ISolarCloudPowerStationsAPI(this.log, this.endpoint, this.userid, this.token, pageList['ps_id'].toString(), pageList['ps_name'], "Unknown", "Unknown", pageList['ps_status']);
+                    powerStations.push(powerStation);
+                });
+                return powerStations;
+            }
+            else
+                throw Error(response['result_msg']);                
         } catch (error: any) {
-            this.log.error(error);
             throw error;
         }
     }
@@ -190,7 +197,7 @@ export class ISolarCloudAPI {
 export class ISolarCloudPowerStationsAPI {
     private readonly endpoint: string;
     private readonly log: Logger;
-    private readonly userid: string;    
+    private readonly userid: string;
     private readonly token: string;
     public readonly id: string;
     public readonly name: string;
@@ -199,7 +206,7 @@ export class ISolarCloudPowerStationsAPI {
     public readonly is_connected: boolean;
 
 
-    constructor(log: Logger, endpoint: string,  userid: string, token: string, id: string, name: string, hardware_version: string, firmware_version: string, is_connected: boolean) {
+    constructor(log: Logger, endpoint: string, userid: string, token: string, id: string, name: string, hardware_version: string, firmware_version: string, is_connected: boolean) {
         this.log = log;
         this.endpoint = endpoint;
         this.userid = userid;
@@ -217,24 +224,28 @@ export class ISolarCloudPowerStationsAPI {
         try {
 
             let body =
-                {
-                    "appkey": APP_KEY,
-                    "api_key_param": {'timestamp': Date.now(), 'nonce': generateRandomWord(32)},                    
-                    "ps_id": this.id,
-                    "valid_flag": "1,3",
-                    "lang": "_en_US",
-                    "token": this.token
-                };
+            {
+                "appkey": APP_KEY,
+                "api_key_param": { 'timestamp': Date.now(), 'nonce': generateRandomWord(32) },
+                "ps_id": this.id,
+                "valid_flag": "1,3",
+                "lang": "_en_US",
+                "token": this.token
+            };
 
             let response: any = await api(this.endpoint + "/v1/powerStationService/getPsDetail", body, this.userid);
 
-            this.log.debug('getPsDetail response = ' + response);      
+            this.log.debug('getPsDetail response = ' + JSON.stringify(response));
 
-            let currentPowerValue = parseFloat(response['result_data']['curr_power']['value']);
-            if (isNaN(currentPowerValue)) currentPowerValue = 0;
-            let currentPowerUnit = response['result_data']['curr_power']['unit'];
-            if (currentPowerUnit == 'kW') currentPowerValue = currentPowerValue * 1000;
-            return currentPowerValue;
+            if (response['result_msg'] == 'success') {
+                let currentPowerValue = parseFloat(response['result_data']['curr_power']['value']);
+                if (isNaN(currentPowerValue)) currentPowerValue = 0;
+                let currentPowerUnit = response['result_data']['curr_power']['unit'];
+                if (currentPowerUnit == 'kW') currentPowerValue = currentPowerValue * 1000;
+                return currentPowerValue;
+            }
+            else
+                throw Error(response['result_msg']);                     
         } catch (error: any) {
             this.log.error(error);
             throw error;
