@@ -1,5 +1,9 @@
 # Changes
 
+## 1.5.0
+
+- [Fix] Added login to all api calls
+
 ## 1.4.0
 
 - [Fix] Improved error handling and debugging
