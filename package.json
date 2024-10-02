@@ -1,6 +1,6 @@
 {
   "name": "homebridge-platform-isolarcloud",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "iSolarCloud platform plugin for [HomeBridge](https://github.com/nfarina/homebridge).",
   "dependencies": {
     "crypto-js": "^4.2.0",

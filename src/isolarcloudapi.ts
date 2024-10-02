@@ -55,6 +55,33 @@ export function generateRandomWord(length: number) {
 }
 
 
+export async function login(endpoint: string, email: string, password: string): Promise<[string, string]> {
+
+    // Login
+    try {
+        let body =
+        {
+            "appkey": APP_KEY,
+            "api_key_param": { 'timestamp': Date.now(), 'nonce': generateRandomWord(32) },
+            "user_account": email,
+            "user_password": password
+        };
+
+        let response: any = await api(endpoint + "/v1/userService/login", body, '');
+
+        if (response['result_msg'] == 'success') {
+            let token = response['result_data']['token'];
+            let userid = response['result_data']['user_id'];
+            return [token, userid];
+        }
+        else
+            throw Error(response['result_msg']);
+    } catch (error: any) {
+        throw error;
+    }
+}
+
+
 export async function api(url: string, body: any, userid: string): Promise<any> {
 
     let randomKey = 'web' + generateRandomWord(13);
@@ -99,8 +126,6 @@ export class ISolarCloudAPI {
     private readonly email: string;
     private readonly password: string;
     private endpoint: string;
-    private token: string;
-    private userid: string;
 
     constructor(log: Logger, server: string, email: string, password: string) {
         this.log = log;
@@ -121,36 +146,6 @@ export class ISolarCloudAPI {
             default:
                 this.endpoint = 'https://gateway.isolarcloud.com.hk'
         }
-        this.userid = "";
-        this.token = "";
-    }
-
-
-    async login() {
-
-        // Login
-        try {
-            let body =
-            {
-                "appkey": APP_KEY,
-                "api_key_param": { 'timestamp': Date.now(), 'nonce': generateRandomWord(32) },
-                "user_account": this.email,
-                "user_password": this.password
-            };
-
-            let response: any = await api(this.endpoint + "/v1/userService/login", body, this.userid);
-
-            this.log.debug('login respose = ' + JSON.stringify(response));
-
-            if (response['result_msg'] == 'success') {
-                this.token = response['result_data']['token'];
-                this.userid = response['result_data']['user_id'];
-            }
-            else
-                throw Error(response['result_msg']);
-        } catch (error: any) {
-            throw error;
-        }
     }
 
 
@@ -160,17 +155,19 @@ export class ISolarCloudAPI {
         // Get the device details
         try {
 
+            let [token, userid] = await login(this.endpoint, this.email, this.password);
+
             let body =
             {
                 "appkey": APP_KEY,
                 "api_key_param": { 'timestamp': Date.now(), 'nonce': generateRandomWord(32) },
-                "user_id": this.userid,
+                "user_id": userid,
                 "valid_flag": "1,3",
                 "lang": "_en_US",
-                "token": this.token
+                "token": token
             };
 
-            let response: any = await api(this.endpoint + "/v1/powerStationService/getPsList", body, this.userid);
+            let response: any = await api(this.endpoint + "/v1/powerStationService/getPsList", body, userid);
 
             this.log.debug('getPsList response = ' + JSON.stringify(response));
 
@@ -179,13 +176,13 @@ export class ISolarCloudAPI {
                 response['result_data']['pageList'].forEach((pageList: any) => {
                     // Create the device
                     this.log.debug(pageList);
-                    let powerStation = new ISolarCloudPowerStationsAPI(this.log, this.endpoint, this.userid, this.token, pageList['ps_id'].toString(), pageList['ps_name'], "Unknown", "Unknown", pageList['ps_status']);
+                    let powerStation = new ISolarCloudPowerStationsAPI(this.log, this.endpoint, this.email, this.password, pageList['ps_id'].toString(), pageList['ps_name'], "Unknown", "Unknown", pageList['ps_status']);
                     powerStations.push(powerStation);
                 });
                 return powerStations;
             }
             else
-                throw Error(response['result_msg']);                
+                throw Error(response['result_msg']);
         } catch (error: any) {
             throw error;
         }
@@ -196,9 +193,9 @@ export class ISolarCloudAPI {
 
 export class ISolarCloudPowerStationsAPI {
     private readonly endpoint: string;
+    private readonly email: string;
+    private readonly password: string;
     private readonly log: Logger;
-    private readonly userid: string;
-    private readonly token: string;
     public readonly id: string;
     public readonly name: string;
     public readonly hardware_version: string;
@@ -206,11 +203,11 @@ export class ISolarCloudPowerStationsAPI {
     public readonly is_connected: boolean;
 
 
-    constructor(log: Logger, endpoint: string, userid: string, token: string, id: string, name: string, hardware_version: string, firmware_version: string, is_connected: boolean) {
+    constructor(log: Logger, endpoint: string, email: string, password: string, id: string, name: string, hardware_version: string, firmware_version: string, is_connected: boolean) {
         this.log = log;
         this.endpoint = endpoint;
-        this.userid = userid;
-        this.token = token;
+        this.email = email;
+        this.password = password;        
         this.id = id;
         this.name = name;
         this.hardware_version = hardware_version;
@@ -223,6 +220,8 @@ export class ISolarCloudPowerStationsAPI {
         // Get the Power Station details
         try {
 
+            let [token, userid] = await login(this.endpoint, this.email, this.password);
+
             let body =
             {
                 "appkey": APP_KEY,
@@ -230,10 +229,10 @@ export class ISolarCloudPowerStationsAPI {
                 "ps_id": this.id,
                 "valid_flag": "1,3",
                 "lang": "_en_US",
-                "token": this.token
+                "token": token
             };
 
-            let response: any = await api(this.endpoint + "/v1/powerStationService/getPsDetail", body, this.userid);
+            let response: any = await api(this.endpoint + "/v1/powerStationService/getPsDetail", body, userid);
 
             this.log.debug('getPsDetail response = ' + JSON.stringify(response));
 
@@ -245,7 +244,7 @@ export class ISolarCloudPowerStationsAPI {
                 return currentPowerValue;
             }
             else
-                throw Error(response['result_msg']);                     
+                throw Error(response['result_msg']);
         } catch (error: any) {
             this.log.error(error);
             throw error;

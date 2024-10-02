@@ -57,47 +57,44 @@ class PlatformISolarCloud {
 
     // login to the API and get the token
     let iSolarCloudAPI: ISolarCloudAPI = new ISolarCloudAPI(this.log, this.server, this.email, this.password);
-    iSolarCloudAPI.login()
-      .then(() => {
 
-        // get an array of the Power Stations
-        iSolarCloudAPI.getPowerStations()
-          .then((powerStations: ISolarCloudPowerStationsAPI[]) => {
+    // get an array of the Power Stations
+    iSolarCloudAPI.getPowerStations()
+      .then((powerStations: ISolarCloudPowerStationsAPI[]) => {
 
-            // loop through each Power Station
-            powerStations.forEach(((powerStation: ISolarCloudPowerStationsAPI) => {
+        // loop through each Power Station
+        powerStations.forEach(((powerStation: ISolarCloudPowerStationsAPI) => {
 
-              // Generate service uuid
-              const uuid = hap.uuid.generate(powerStation.id);
+          // Generate service uuid
+          const uuid = hap.uuid.generate(powerStation.id);
 
-              // Check if Power Station is already loaded from cache
-              if (this.accessories[uuid]) {
-                this.log.info('Configuring cached Power Station');
+          // Check if Power Station is already loaded from cache
+          if (this.accessories[uuid]) {
+            this.log.info('Configuring cached Power Station');
 
-                // Setup Irrigation Accessory and Irrigation Service
-                let powerStationAccessory = this.accessories[uuid];
-                this.configureLightSensor(powerStationAccessory.getService(hap.Service.LightSensor)!, powerStation);
+            // Setup Irrigation Accessory and Irrigation Service
+            let powerStationAccessory = this.accessories[uuid];
+            this.configureLightSensor(powerStationAccessory.getService(hap.Service.LightSensor)!, powerStation);
 
-              }
-              else {
-                this.log.info('Creating and configuring new Power Station', powerStation.name);
+          }
+          else {
+            this.log.info('Creating and configuring new Power Station', powerStation.name);
 
-                // Create Power Station Accessory and Irrigation Service
-                let powerStationAccessory = new this.api.platformAccessory(powerStation.name, uuid);
-                let lightSensorService = this.createLightSensorService(powerStationAccessory, powerStation);
-                this.configureLightSensor(lightSensorService, powerStation);
+            // Create Power Station Accessory and Irrigation Service
+            let powerStationAccessory = new this.api.platformAccessory(powerStation.name, uuid);
+            let lightSensorService = this.createLightSensorService(powerStationAccessory, powerStation);
+            this.configureLightSensor(lightSensorService, powerStation);
 
-                // Register platform accessory
-                this.log.debug('Registering platform accessory');
-                this.api.registerPlatformAccessories(PluginName, PlatformName, [powerStationAccessory]);
-                this.accessories[uuid] = powerStationAccessory;
-              }
-            }));
-         })
-         .catch(error => this.log.error('Powerstations error ' + error));
+            // Register platform accessory
+            this.log.debug('Registering platform accessory');
+            this.api.registerPlatformAccessories(PluginName, PlatformName, [powerStationAccessory]);
+            this.accessories[uuid] = powerStationAccessory;
+          }
+        }));
       })
-      .catch(error => this.log.error('Login error ' + error));
-  }
+      .catch(error => this.log.error('Powerstations error ' + error));
+
+    }
 
 
   configureAccessory(accessory: PlatformAccessory) {
